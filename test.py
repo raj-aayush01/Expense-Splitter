@@ -14,7 +14,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Load API Keys
+# Load API Keys (silently)
 load_dotenv()
 GENAI_API_KEY = os.getenv("GOOGLE_API_KEY")
 RAZORPAY_KEY = os.getenv("RAZORPAY_KEY")
@@ -34,7 +34,7 @@ if "expenses" not in st.session_state:
 if "active_tab" not in st.session_state:
     st.session_state.active_tab = "Expense Splitter"
 
-# Custom CSS for better UI
+# Custom CSS for better UI with softer colors
 st.markdown("""
 <style>
     .main-header {
@@ -48,12 +48,15 @@ st.markdown("""
         color: #3498db;
         margin-top: 1.5rem;
     }
+    /* Softer background color instead of stark white */
+    .stApp {
+        background-color: #f5f7fa;
+    }
+    /* Removed card styling to eliminate panels */
     .card {
-        background-color: #f8f9fa;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
     }
     .success-msg {
         background-color: #d4edda;
@@ -69,15 +72,51 @@ st.markdown("""
         border-radius: 5px;
         margin: 10px 0;
     }
+    /* Hide Streamlit's default header bar */
+    header {
+        visibility: hidden;
+    }
+    /* Adjust main content area */
+    .block-container {
+        padding-top: 1rem;
+    }
+    /* Improve tab styling with softer colors */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 0px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        white-space: pre-wrap;
+        border-radius: 4px 4px 0px 0px;
+        padding: 0px 16px;
+        background-color: #e9ecef;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #4dabf7;
+    }
+    /* Style for widgets */
+    .stButton > button {
+        background-color: #4dabf7;
+        color: white;
+    }
+    .stButton > button:hover {
+        background-color: #3b8ec2;
+    }
+    /* Sidebar styling */
+    .css-1d391kg {
+        background-color: #e9ecef;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # Sidebar for navigation
 with st.sidebar:
-    st.image("https://place-hold.it/300x100?text=Expense%20Manager&fontsize=23", width=270)
-    st.title("Navigation")
+    st.title("Expense Manager")
+    st.markdown("---")
+    st.subheader("Navigation")
     selected_feature = st.radio(
-        "Choose Feature",
+        "Choose Feature:",
         ["Expense Splitter", "Monthly Expense Tracker"],
         index=0 if st.session_state.active_tab == "Expense Splitter" else 1
     )
@@ -91,21 +130,6 @@ with st.sidebar:
     - Split expenses among friends
     - Track your monthly spending
     """)
-    
-    # Show credentials section only if visible 
-    with st.expander("API Credentials"):
-        st.text_input("Google API Key", 
-                     value=GENAI_API_KEY if GENAI_API_KEY else "", 
-                     type="password", 
-                     key="google_key")
-        st.text_input("Razorpay Key", 
-                     value=RAZORPAY_KEY if RAZORPAY_KEY else "", 
-                     type="password",
-                     key="razor_key")
-        st.text_input("Razorpay Secret", 
-                     value=RAZORPAY_SECRET if RAZORPAY_SECRET else "", 
-                     type="password",
-                     key="razor_secret")
 
 # EXPENSE SPLITTER FEATURE
 def show_expense_splitter():
@@ -135,11 +159,10 @@ def show_expense_splitter():
     expenses = st.session_state.groups[selected_group]["expenses"]
     paid_status = st.session_state.groups[selected_group]["paid_status"]
     
-    # Group Management Section
-    tab1, tab2, tab3, tab4 = st.tabs(["👥 Members", "➕ Add Expense", "📊 Balances", "💳 Payments"])
+    # Group Management Section - Using tabs without extra spacing
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["👥 Members", "➕ Add Expense", "📊 Balances", "💳 Payments", "🔍 AI Insights"])
     
     with tab1:
-        st.markdown("<div class='card'>", unsafe_allow_html=True)
         st.markdown("<h3 class='sub-header'>Add Members</h3>", unsafe_allow_html=True)
         new_member = st.text_input("Add Member Name:", key="new_member_input")
         if st.button("Add Member"):
@@ -152,10 +175,8 @@ def show_expense_splitter():
             st.markdown("#### Current Members")
             for i, member in enumerate(members):
                 st.write(f"{i+1}. {member}")
-        st.markdown("</div>", unsafe_allow_html=True)
     
     with tab2:
-        st.markdown("<div class='card'>", unsafe_allow_html=True)
         st.markdown("<h3 class='sub-header'>Add New Expense</h3>", unsafe_allow_html=True)
         description = st.text_input("Expense Description:")
         amount = st.number_input("Amount (₹)", min_value=0.0, format="%.2f")
@@ -187,10 +208,8 @@ def show_expense_splitter():
                 file_name=f"{selected_group}_expenses.csv",
                 mime="text/csv"
             )
-        st.markdown("</div>", unsafe_allow_html=True)
     
     with tab3:
-        st.markdown("<div class='card'>", unsafe_allow_html=True)
         st.markdown("<h3 class='sub-header'>Balance Sheet</h3>", unsafe_allow_html=True)
         
         if not members or not expenses:
@@ -205,12 +224,21 @@ def show_expense_splitter():
                         balances[member] -= per_person
                         balances[expense["paid_by"]] += per_person
             
-            # Apply paid status
+            # Mark payments section directly here
+            st.markdown("#### Mark as Paid")
+            for member in members:
+                paid_checkbox = st.checkbox(
+                    f"{member} has paid",
+                    value=paid_status.get(member, False),
+                    key=f"paid_{selected_group}_{member}"
+                )
+                paid_status[member] = paid_checkbox
+            
+            # Apply paid status after checkboxes
             for member in members:
                 if paid_status.get(member, False):
                     balances[member] = 0
             
-            # Show who needs to pay
             col1, col2 = st.columns(2)
             with col1:
                 st.markdown("#### Who needs to pay")
@@ -241,33 +269,33 @@ def show_expense_splitter():
                 mime="text/csv"
             )
             
-            # Visualize balances
+            # Visualize balances with controlled width
             st.markdown("#### Balance Visualization")
             chart_data = pd.DataFrame({
                 "Members": list(balances.keys()),
                 "Balances": list(balances.values())
             })
-            st.bar_chart(chart_data.set_index("Members"))
-        st.markdown("</div>", unsafe_allow_html=True)
+            container = st.container()
+            with container:
+                col1, col2 = st.columns([2, 1])
+                with col1:
+                    st.bar_chart(chart_data.set_index("Members"), width=400)
+                
+                # Leaderboard in the right column
+                with col2:
+                    st.markdown("#### Leaderboard")
+                    sorted_balances = sorted(balances.items(), key=lambda x: x[1], reverse=True)
+                    for idx, (member, balance) in enumerate(sorted_balances):
+                        if idx == 0:
+                            st.markdown(f"🥇 **Top Contributor**: {member} (₹{balance:.2f})")
+                        else:
+                            st.write(f"#{idx+1}: {member} (₹{balance:.2f})")
     
     with tab4:
-        st.markdown("<div class='card'>", unsafe_allow_html=True)
-        st.markdown("<h3 class='sub-header'>Payments</h3>", unsafe_allow_html=True)
-        
-        # Mark payments section
-        st.markdown("#### Mark as Paid")
-        for member in members:
-            paid_checkbox = st.checkbox(
-                f"{member} has paid",
-                value=paid_status.get(member, False),
-                key=f"paid_{selected_group}_{member}"
-            )
-            paid_status[member] = paid_checkbox
+        st.markdown("<h3 class='sub-header'>Process Payments</h3>", unsafe_allow_html=True)
         
         # Razorpay Integration (if API keys are available)
         if RAZORPAY_KEY and RAZORPAY_SECRET:
-            st.markdown("#### Make a Payment")
-            
             # Calculate balances for dropdown
             balances = {member: 0 for member in members}
             for expense in expenses:
@@ -276,6 +304,11 @@ def show_expense_splitter():
                     if member != expense["paid_by"]:
                         balances[member] -= per_person
                         balances[expense["paid_by"]] += per_person
+            
+            # Apply paid status
+            for member in members:
+                if paid_status.get(member, False):
+                    balances[member] = 0
             
             pay_to = st.selectbox("Pay To:", [p for p in balances if balances[p] > 0] or ["No one to pay"])
             pay_amount = st.number_input("Amount to Pay (₹)", min_value=0.0, format="%.2f", key="pay_amount")
@@ -294,13 +327,13 @@ def show_expense_splitter():
                 else:
                     st.warning("Please select a valid payee and amount.")
         else:
-            st.info("Razorpay payment integration requires API keys. Please configure them in the sidebar.")
-        st.markdown("</div>", unsafe_allow_html=True)
+            st.info("Razorpay payment integration requires API keys.")
+    
+    # Separate tab for AI Insights
+    with tab5:
+        st.markdown("<h3 class='sub-header'>AI Insights</h3>", unsafe_allow_html=True)
         
-        # AI Insights (if API key is available)
         if GENAI_API_KEY and expenses:
-            st.markdown("<div class='card'>", unsafe_allow_html=True)
-            st.markdown("<h3 class='sub-header'>AI Insights</h3>", unsafe_allow_html=True)
             if st.button("Get AI Suggestions"):
                 try:
                     model = genai.GenerativeModel("gemini-1.5-flash")
@@ -310,7 +343,8 @@ def show_expense_splitter():
                     st.write(response.text)
                 except Exception as e:
                     st.error(f"AI error: {str(e)}")
-            st.markdown("</div>", unsafe_allow_html=True)
+        else:
+            st.info("AI insights require Google API key to be configured.")
 
 # MONTHLY EXPENSE TRACKER FEATURE
 def show_expense_tracker():
@@ -328,7 +362,6 @@ def show_expense_tracker():
     col1, col2 = st.columns([1, 1])
     
     with col1:
-        st.markdown("<div class='card'>", unsafe_allow_html=True)
         st.markdown("<h3 class='sub-header'>Add New Expense</h3>", unsafe_allow_html=True)
         
         # Date Selection
@@ -352,10 +385,8 @@ def show_expense_tracker():
                 st.rerun()  # Refresh to update calendar highlights
             else:
                 st.warning("Please enter both an item name and an amount greater than zero.")
-        st.markdown("</div>", unsafe_allow_html=True)
     
     with col2:
-        st.markdown("<div class='card'>", unsafe_allow_html=True)
         st.markdown(f"<h3 class='sub-header'>Calendar for {selected_month} {current_year}</h3>", unsafe_allow_html=True)
         
         # Get all recorded expense dates
@@ -368,7 +399,7 @@ def show_expense_tracker():
         calendar_html = "<table style='width:100%; text-align:center; font-size:16px;'>"
         
         # Table headers
-        calendar_html += "<tr><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th style='color:red;'>Sat</th><th style='color:red;'>Sun</th></tr>"
+        calendar_html += "<tr><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th style='color:#e03131;'>Sat</th><th style='color:#e03131;'>Sun</th></tr>"
         
         # Populate calendar with highlighted days
         for week in month_calendar:
@@ -377,17 +408,15 @@ def show_expense_tracker():
                 if day == 0:
                     calendar_html += "<td></td>"  # Empty cell for padding
                 elif day in expense_dates:
-                    calendar_html += f"<td style='background-color:#90EE90; border-radius: 5px; padding:8px;'>{day}</td>"  # Highlighted in light green
+                    calendar_html += f"<td style='background-color:#8ce99a; border-radius: 5px; padding:8px;'>{day}</td>"  # Highlighted in light green
                 else:
                     calendar_html += f"<td style='padding:8px;'>{day}</td>"
             calendar_html += "</tr>"
         
         calendar_html += "</table>"
         st.markdown(calendar_html, unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
     
     # Display Expenses for Selected Month
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
     st.markdown(f"<h3 class='sub-header'>Expenses for {selected_month} {current_year}</h3>", unsafe_allow_html=True)
     
     filtered_expenses = st.session_state.expenses[st.session_state.expenses["Date"].str.startswith(f"{current_year}-{month_number:02d}")]
@@ -401,13 +430,23 @@ def show_expense_tracker():
         csv = filtered_expenses.to_csv(index=False).encode("utf-8")
         st.download_button("Download Expense Report", csv, f"expenses_{selected_month}_{current_year}.csv", "text/csv")
         
-        # Show expense breakdown
+        # Show expense breakdown with controlled width
         st.markdown("#### Expense Breakdown")
         category_data = filtered_expenses.groupby("Item")["Amount"].sum().reset_index()
-        st.bar_chart(category_data.set_index("Item"))
+        col1, col2 = st.columns([2, 1])
+        with col1:
+            st.bar_chart(category_data.set_index("Item"), width=400)
+        with col2:
+            # Top expenses
+            st.markdown("#### Top Expenses")
+            sorted_expenses = category_data.sort_values("Amount", ascending=False)
+            for i, (item, amount) in enumerate(zip(sorted_expenses["Item"], sorted_expenses["Amount"])):
+                if i == 0:
+                    st.markdown(f"🥇 **Highest**: {item} (₹{amount:.2f})")
+                else:
+                    st.write(f"#{i+1}: {item} (₹{amount:.2f})")
     else:
         st.info("No expenses recorded for this month. Add some expenses to see them here.")
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # Main app logic - show the selected feature
 if st.session_state.active_tab == "Expense Splitter":
