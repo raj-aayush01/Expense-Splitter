@@ -430,21 +430,20 @@ def show_expense_tracker():
         csv = filtered_expenses.to_csv(index=False).encode("utf-8")
         st.download_button("Download Expense Report", csv, f"expenses_{selected_month}_{current_year}.csv", "text/csv")
         
-        # Show expense breakdown with controlled width
-        st.markdown("#### Expense Breakdown")
+        # Display top expenses without the graph
+        st.markdown("#### Top Expenses")
         category_data = filtered_expenses.groupby("Item")["Amount"].sum().reset_index()
-        col1, col2 = st.columns([2, 1])
-        with col1:
-            st.bar_chart(category_data.set_index("Item"), width=400)
-        with col2:
-            # Top expenses
-            st.markdown("#### Top Expenses")
-            sorted_expenses = category_data.sort_values("Amount", ascending=False)
-            for i, (item, amount) in enumerate(zip(sorted_expenses["Item"], sorted_expenses["Amount"])):
-                if i == 0:
-                    st.markdown(f"🥇 **Highest**: {item} (₹{amount:.2f})")
-                else:
-                    st.write(f"#{i+1}: {item} (₹{amount:.2f})")
+        sorted_expenses = category_data.sort_values("Amount", ascending=False)
+        
+        # Display top 5 expenses (or all if less than 5)
+        num_to_display = min(5, len(sorted_expenses))
+        for i in range(num_to_display):
+            item = sorted_expenses.iloc[i]["Item"]
+            amount = sorted_expenses.iloc[i]["Amount"]
+            if i == 0:
+                st.markdown(f"🥇 **Highest**: {item} (₹{amount:.2f})")
+            else:
+                st.write(f"#{i+1}: {item} (₹{amount:.2f})")
     else:
         st.info("No expenses recorded for this month. Add some expenses to see them here.")
 
