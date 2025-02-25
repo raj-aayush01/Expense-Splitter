@@ -1,1 +1,7 @@
 google-generativeai
+streamlit
+matplotlib
+Pillow
+groq
+pandas
+numpy
