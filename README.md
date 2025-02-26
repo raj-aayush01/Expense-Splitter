@@ -4,14 +4,14 @@ A comprehensive financial management tool built with Streamlit that helps users 
 Features
 ### 1. Expense Splitter
 
-Create and manage multiple groups for expense splitting
-Add members to each group
-Record expenses with custom split options
-View real-time balances and settlement information
-Generate visualizations of who owes what
-Mark payments as complete
-Process payments directly through Razorpay integration
-Get AI-powered insights on spending patterns
+-Create and manage multiple groups for expense splitting
+-Add members to each group
+-Record expenses with custom split options
+-View real-time balances and settlement information
+-Generate visualizations of who owes what
+-Mark payments as complete
+-Process payments directly through Razorpay integration
+-Get AI-powered insights on spending patterns
 
 ### 2. Monthly Expense Tracker
 
