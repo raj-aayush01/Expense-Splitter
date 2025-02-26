@@ -1,4 +1,4 @@
-# Smart Expense Manager
+# Smart Expense Manager and Splitter
 A comprehensive financial management tool built with Streamlit that helps users track personal expenses and split group expenses with friends, roommates, or family.
 
 Features
