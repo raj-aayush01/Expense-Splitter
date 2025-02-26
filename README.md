@@ -1,8 +1,8 @@
-### Smart Expense Manager
+# Smart Expense Manager
 A comprehensive financial management tool built with Streamlit that helps users track personal expenses and split group expenses with friends, roommates, or family.
 
 Features
-# 1. Expense Splitter
+### 1. Expense Splitter
 
 Create and manage multiple groups for expense splitting
 Add members to each group
@@ -13,14 +13,14 @@ Mark payments as complete
 Process payments directly through Razorpay integration
 Get AI-powered insights on spending patterns
 
-# 2. Monthly Expense Tracker
+### 2. Monthly Expense Tracker
 
 Track personal expenses by month
 Calendar view with expense highlights
 Monthly expense summary with top spending categories
 Download expense reports as CSV files
 
-# Technologies Used
+### Technologies Used
 
 Streamlit: For the interactive web interface
 Pandas: For data manipulation and analysis
